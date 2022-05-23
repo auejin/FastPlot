@@ -110,7 +110,7 @@ class Poller:
             data = self.serial.readline().decode().strip()
             if len(data) > 0:
                 if self.filter is not None and callable(self.filter) :
-                    data = f(data)
+                    data = self.filter(data)
                 self.rows.append(data)
 
     def connect(self, keyword:str, baud:int):
