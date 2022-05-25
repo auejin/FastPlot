@@ -1,6 +1,8 @@
 # FastPlot
 
-<img src="fastplot.gif" alt="fastplot" style="width:50%;" />
+<p align="center">
+    <img src="fastplot.gif" alt="fastplot" style="width:50%;"/>
+</p>
 
 This renders a real-time matplotlib plot using data from serial input streams. You can click the plot to pause updates, or close the window to terminate logging threads. This assumes each row is formatted as `<var0><delim>...<delim><varN>`. If not, you can modify the input stream with your own filter before parsing.
 
