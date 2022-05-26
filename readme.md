@@ -4,7 +4,7 @@
     <img src="fastplot.gif" alt="fastplot" style="width:50%;"/>
 </p>
 
-FastPlot reads a serial input stream and display a real-time matplotlib animation. You can click the plot to pause updates, or close the window to gracefully terminate both rendering and serial communication threads. 
+FastPlot reads a serial input stream and displays a real-time matplotlib animation. You can click the plot to pause updates, or close the window to gracefully terminate both rendering and serial communication threads. 
 
 FastPlot assumes each line to be only consisted of numeric variables (`label`) and delimiters (`delim`). If not, you can design your own `filter` to be applied before parsing each line. Wrongly placed delimiters are automatically neglected.
 
