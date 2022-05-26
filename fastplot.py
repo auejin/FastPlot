@@ -1,3 +1,4 @@
+import time
 import serial
 import serial.tools.list_ports
 from threading import Thread
@@ -106,12 +107,16 @@ class Poller:
         self.thread.join()
 
     def _thr_read(self):
+        # this prevents reading debug string when board is initialized
+        time.sleep(0.3)
+
         while self.running and self.serial.is_open:
             data = self.serial.readline().decode().strip()
             if len(data) > 0:
                 if self.filter is not None and callable(self.filter) :
                     data = self.filter(data)
                 self.rows.append(data)
+            
 
     def connect(self, keyword:str, baud:int):
         """ connect to a serial port filtered by given `keyword`
@@ -140,8 +145,8 @@ class Poller:
             
             else:
                 ser.port = port_to_connect
-                ser.barudrate = baud
-                ser.timeout = 10
+                ser.baudrate = baud
+                ser.timeout = None
                 ser.open()
 
                 if ser.is_open:
@@ -207,6 +212,16 @@ class LinePlotter:
         """ click to pause or resume real-time plotting """
         self.paused = not self.paused
 
+    def _is_row_valid(self, row:str):
+        """ check whether given `row` only contains numbers and deliminators """
+        first_elem = row.split(self.delim)[0]
+        if len(first_elem) == 0:
+            return False
+        elif first_elem.replace('-','',1).replace('.','',1).isdigit():
+            return True
+        else:
+            return False
+    
     def push(self, frame:int):
         """ append a string of row received from serial port
         
@@ -222,11 +237,11 @@ class LinePlotter:
         
         for row in rows:
             # render when unread row exists and graph is not paused
-            if len(row) == 0:
+            if len(row) == 0 or not self._is_row_valid(row):
                 continue
             
             # row string to row list
-            row = list(map(float, row.split(self.delim)))
+            row = list(map(float, [i for i in row.split(self.delim) if len(i) > 0]))
 
             # update x
             self.d['x'].pop(0)
@@ -306,6 +321,16 @@ class BarPlotter:
         """ click to pause or resume real-time plotting """
         self.paused = not self.paused
 
+    def _is_row_valid(self, row:str):
+        """ check whether given `row` only contains numbers and deliminators """
+        first_elem = row.split(self.delim)[0]
+        if len(first_elem) == 0:
+            return False
+        elif first_elem.replace('-','',1).replace('.','',1).isdigit():
+            return True
+        else:
+            return False
+
     def push(self, frame:int):
         """ append a string of row received from serial port
         
@@ -321,11 +346,11 @@ class BarPlotter:
         
         for row in rows:
             # render when unread row exists and graph is not paused
-            if len(row) == 0:
+            if len(row) == 0 or not self._is_row_valid(row):
                 continue
             
             # row string to row list
-            row = list(map(float, row.split(self.delim)))
+            row = list(map(float, [i for i in row.split(self.delim) if len(i) > 0]))
 
             # update labels
             for i, label in enumerate(self.labels):
@@ -351,15 +376,11 @@ class BarPlotter:
 
 if __name__ == '__main__' :
     
-    # an arbitrary preprocessing function from serial input
-    f = lambda x: x.replace('Quaternion:','').replace('nan','0.0')
-
-    board = Poller(filter=f)
-    board.connect('COM11', 115200)
+    board = Poller()
+    board.connect('COM7', 115200)
     board.start()
-
     
-    plotter = LinePlotter(labels=['data_a', 'data_b', 'data_c', 'data_d'], poller=board, rows=100)
-    # plotter = BarPlotter(labels=['data_a', 'data_b', 'data_c', 'data_d'], poller=board)
-    anim = plotter.draw(10)
+    anim = BarPlotter(
+        labels=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'], 
+        poller=board, delim=',').draw(10)
     plt.show()

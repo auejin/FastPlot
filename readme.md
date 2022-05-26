@@ -4,7 +4,9 @@
     <img src="fastplot.gif" alt="fastplot" style="width:50%;"/>
 </p>
 
-This renders a real-time matplotlib plot using data from serial input streams. You can click the plot to pause updates, or close the window to terminate logging threads. This assumes each row is formatted as `<var0><delim>...<delim><varN>`. If not, you can modify the input stream with your own filter before parsing.
+FastPlot reads a serial input stream and display a real-time matplotlib animation. You can click the plot to pause updates, or close the window to gracefully terminate both rendering and serial communication threads. 
+
+FastPlot assumes each line to be only consisted of numeric variables (`label`) and delimiters (`delim`). If not, you can design your own `filter` to be applied before parsing each line. Wrongly placed delimiters are automatically neglected.
 
 
 
@@ -24,18 +26,20 @@ pip install -r requirements.txt
 import fastplot as pp
 import matplotlib.pyplot as plt
 
+# append min max value of y range
+f = lambda y: y+',0,400'
+
 # specify a serial port to read
-board = pp.Poller()
-board.connect('COM11', 115200)
+board = pp.Poller(filter=f)
+board.connect('COM7', 115200)
 board.start()
 
 # draw a line plot (like a serial plot of Arduino IDE)
-canvas = pp.LinePlotter(
-	labels=['col_a', 'col_b', 'col_c'],
-    poller=board, rows=100, )
+anim = pp.LinePlotter(
+    labels=['a', 'b', 'c', 'd', 'min', 'max'], 
+    poller=board, rows=30, delim=',').draw(interval=10)
 
-# define plot parameters
-anim = canvas.draw(interval=10)
+# display plot animation
 plt.show()
 ```
 
@@ -53,38 +57,10 @@ board.connect('COM11', 115200)
 board.start()
 
 # draw a bar plot (visualize only the most recent row)
-canvas = pp.BarPlotter(
-	labels=['col_a', 'col_b', 'col_c'],
-    poller=board, )
+anim = pp.BarPlotter(
+	labels=['r', 'x', 'y', 'z'],
+    poller=board, delim='\t').draw(interval=10)
 
-# define plot parameters
-anim = canvas.draw(interval=10)
+# display plot animation
 plt.show()
 ```
-
-
-
-### Preprocessing Input Stream
-
-```python
-import fastplot as pp
-import matplotlib.pyplot as plt
-
-# define a preprocessing function from serial input
-f = lambda x: x.replace('Quaternion:','').replace('nan','0.0')
-
-# specify a serial port to read
-board = pp.Poller(filter=f)
-board.connect('COM11', 115200)
-board.start()
-
-# draw a bar plot (visualize only the most recent row)
-canvas = pp.BarPlotter(
-	labels=['col_a', 'col_b', 'col_c'],
-    poller=board, )
-
-# define plot parameters
-anim = canvas.draw(interval=10)
-plt.show()
-```
-
